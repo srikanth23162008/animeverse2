@@ -1,5 +1,8 @@
 
+// ================= ANIME QUIZ DATA =================
+
 const animeData = {
+
   "Naruto": [
     ["Who is Naruto's father?", ["Minato", "Kakashi", "Jiraiya", "Sasuke"], 0],
     ["What is Naruto's dream?", ["Become Hokage", "Become a doctor", "Become a samurai", "Become a teacher"], 0],
@@ -35,7 +38,7 @@ const animeData = {
     ["What is Zenitsu known for?", ["Thunder Breathing", "Water Breathing", "Beast Breathing", "Mist Breathing"], 0],
     ["Who uses Beast Breathing?", ["Inosuke", "Genya", "Giyu", "Rengoku"], 0],
     ["Who is the main demon villain?", ["Muzan", "Akaza", "Doma", "Kokushibo"], 0],
-    ["What is the name of the swordsmith village arc's main Hashira?", ["Muichiro", "Rengoku", "Tengen", "Giyu"], 0],
+    ["Who is the main Hashira in the Swordsmith Village arc?", ["Muichiro", "Rengoku", "Tengen", "Giyu"], 0],
     ["What is the name of Tanjiro's father?", ["Tanjuro", "Sakonji", "Shinjuro", "Kagaya"], 0]
   ],
 
@@ -110,13 +113,17 @@ const animeData = {
     ["Which anime features a volleyball team?", ["Haikyuu!!", "Kuroko's Basketball", "Free!", "Blue Lock"], 0],
     ["Which anime features a character named Luffy?", ["One Piece", "Naruto", "Bleach", "Fairy Tail"], 0],
     ["Which anime features alchemy?", ["Fullmetal Alchemist", "Demon Slayer", "Spy x Family", "Dr. Stone"], 0],
-    ["Which anime features a notebook called Death Note?", ["Death Note", "Monster", "Erased", "Code Geass"], 0],
-    ["Which anime is about a doctor named Kenzo Tenma?", ["Monster", "Steins;Gate", "One Piece", "Naruto"], 0],
+    ["Which anime features a doctor named Kenzo Tenma?", ["Monster", "Steins;Gate", "One Piece", "Naruto"], 0],
     ["Which anime features a character named Saitama?", ["One Punch Man", "Mob Psycho 100", "Bleach", "Black Clover"], 0],
     ["Which anime features a blue-haired boy named Senku?", ["Dr. Stone", "Blue Lock", "Fairy Tail", "Naruto"], 0],
-    ["Which anime features the Straw Hat Pirates?", ["One Piece", "Black Clover", "Bleach", "Dragon Ball"], 0]
+    ["Which anime features the Straw Hat Pirates?", ["One Piece", "Black Clover", "Bleach", "Dragon Ball"], 0],
+    ["Which anime features Edward Elric?", ["Fullmetal Alchemist", "Naruto", "One Piece", "Death Note"], 0]
   ]
+
 };
+
+
+// ================= GAME VARIABLES =================
 
 let currentAnime = "";
 let currentMode = "normal";
@@ -128,14 +135,72 @@ let timerInterval = null;
 let answerHistory = [];
 let selectedAnswer = null;
 
+
+// ================= RANDOM SHUFFLE FUNCTION =================
+
+// Fisher-Yates shuffle algorithm
+
+function shuffleArray(array) {
+
+  const shuffled = [...array];
+
+  for (let i = shuffled.length - 1; i > 0; i--) {
+
+    const j = Math.floor(Math.random() * (i + 1));
+
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+
+  }
+
+  return shuffled;
+
+}
+
+
+// ================= RANDOM QUESTIONS AND OPTIONS =================
+
+function prepareQuestions(sourceQuestions) {
+
+  return shuffleArray(sourceQuestions).map(question => {
+
+    // Get the original correct answer before shuffling.
+
+    const correctAnswer = question[1][question[2]];
+
+    // Randomize answer options.
+
+    const shuffledOptions = shuffleArray(question[1]);
+
+    // Find the correct answer's new position.
+
+    const newCorrectIndex = shuffledOptions.indexOf(correctAnswer);
+
+    return [
+      question[0],
+      shuffledOptions,
+      newCorrectIndex
+    ];
+
+  });
+
+}
+
+
+// ================= DOM ELEMENTS =================
+
 const categoryList = document.getElementById("category-list");
 const quizSection = document.getElementById("quiz-section");
 const resultSection = document.getElementById("result-section");
 
+
+// ================= CREATE CATEGORIES =================
+
 function createCategories() {
+
   categoryList.innerHTML = "";
 
   Object.keys(animeData).forEach(anime => {
+
     const card = document.createElement("div");
     card.className = "category-card";
 
@@ -144,59 +209,115 @@ function createCategories() {
 
     const playButton = document.createElement("button");
     playButton.textContent = "Start Quiz";
+
     playButton.addEventListener("click", () => startQuiz(anime));
 
     card.appendChild(title);
     card.appendChild(playButton);
+
     categoryList.appendChild(card);
+
   });
+
 }
 
+
+// ================= START QUIZ =================
+
 function startQuiz(anime, mode = "normal") {
+
   clearInterval(timerInterval);
 
   currentMode = mode;
 
+  let selectedQuestions;
+
   if (mode === "random") {
+
     const categories = Object.keys(animeData);
+
     anime = categories[Math.floor(Math.random() * categories.length)];
+
+    selectedQuestions = animeData[anime];
+
   }
 
-  currentAnime = anime;
-  questions = [...animeData[anime]];
+  else if (mode === "daily") {
+
+    const allQuestions = Object.values(animeData).flat();
+
+    const dateKey = new Date().toISOString().slice(0, 10);
+
+    let seed = 0;
+
+    for (const char of dateKey) {
+      seed = (seed * 31 + char.charCodeAt(0)) >>> 0;
+    }
+
+    function seededRandom() {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 4294967296;
+    }
+
+    const dailyPool = [...allQuestions];
+
+    for (let i = dailyPool.length - 1; i > 0; i--) {
+
+      const j = Math.floor(seededRandom() * (i + 1));
+
+      [dailyPool[i], dailyPool[j]] = [dailyPool[j], dailyPool[i]];
+
+    }
+
+    selectedQuestions = dailyPool.slice(0, 10);
+
+    currentAnime = "Daily Anime Quiz";
+
+  }
+
+  else {
+
+    selectedQuestions = animeData[anime];
+
+  }
+
+  if (mode !== "daily") {
+    currentAnime = anime;
+  }
+
+  // Randomize questions and answer options.
+
+  questions = prepareQuestions(selectedQuestions.slice(0, 10));
+
   currentQuestion = 0;
   score = 0;
   timeLeft = 300;
   answerHistory = [];
   selectedAnswer = null;
 
-  if (mode === "daily") {
-    const allQuestions = Object.values(animeData).flat();
-    const dayNumber = Math.floor(Date.now() / 86400000);
-    const shuffled = [...allQuestions].sort((a, b) =>
-      ((a[0].length * 7 + dayNumber) % 17) -
-      ((b[0].length * 7 + dayNumber) % 17)
-    );
-    questions = shuffled.slice(0, 10);
-    currentAnime = "Daily Anime Quiz";
-  } else {
-    questions = questions.slice(0, 10);
-  }
-
   document.getElementById("quiz-title").textContent = currentAnime;
+
   document.getElementById("timer").textContent = "05:00";
 
   document.getElementById("categories").classList.add("hidden");
+
   quizSection.classList.remove("hidden");
+
   resultSection.classList.add("hidden");
 
   showQuestion();
+
   startTimer();
 
   quizSection.scrollIntoView({ behavior: "smooth" });
+
 }
 
+
+// ================= SHOW QUESTION =================
+
 function showQuestion() {
+
   selectedAnswer = null;
 
   const question = questions[currentQuestion];
@@ -212,31 +333,44 @@ function showQuestion() {
   document.getElementById("feedback").textContent = "";
 
   const optionsContainer = document.getElementById("answer-options");
+
   optionsContainer.innerHTML = "";
 
   document.getElementById("next-button").disabled = true;
 
   question[1].forEach((option, index) => {
+
     const button = document.createElement("button");
+
     button.className = "option-button";
+
     button.textContent = option;
 
     button.addEventListener("click", () => selectAnswer(index));
 
     optionsContainer.appendChild(button);
+
   });
+
 }
 
+
+// ================= SELECT ANSWER =================
+
 function selectAnswer(index) {
+
   if (selectedAnswer !== null) return;
 
   selectedAnswer = index;
 
   const question = questions[currentQuestion];
+
   const correctIndex = question[2];
+
   const buttons = document.querySelectorAll(".option-button");
 
   buttons.forEach((button, i) => {
+
     button.disabled = true;
 
     if (i === correctIndex) {
@@ -246,169 +380,307 @@ function selectAnswer(index) {
     if (i === index && index !== correctIndex) {
       button.classList.add("wrong");
     }
+
   });
 
   const isCorrect = index === correctIndex;
 
   if (isCorrect) {
+
     score++;
+
     document.getElementById("feedback").textContent = "Correct! 🎉";
-  } else {
+
+  }
+
+  else {
+
     document.getElementById("feedback").textContent =
       `Incorrect! Correct answer: ${question[1][correctIndex]}`;
+
   }
 
   answerHistory.push({
+
     question: question[0],
+
     selected: question[1][index],
+
     correct: question[1][correctIndex],
+
     isCorrect: isCorrect
+
   });
 
   document.getElementById("next-button").disabled = false;
+
 }
 
+
+// ================= NEXT QUESTION =================
+
 function nextQuestion() {
+
   if (selectedAnswer === null) return;
 
   currentQuestion++;
 
   if (currentQuestion < questions.length) {
+
     showQuestion();
-  } else {
-    finishQuiz();
+
   }
+
+  else {
+
+    finishQuiz();
+
+  }
+
 }
 
+
+// ================= TIMER =================
+
 function startTimer() {
+
   timerInterval = setInterval(() => {
+
     timeLeft--;
 
     const minutes = Math.floor(timeLeft / 60);
+
     const seconds = timeLeft % 60;
 
     document.getElementById("timer").textContent =
       `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 
     if (timeLeft <= 0) {
+
       finishQuiz();
+
     }
+
   }, 1000);
+
 }
 
+
+// ================= FINISH QUIZ =================
+
 function finishQuiz() {
+
   clearInterval(timerInterval);
 
   quizSection.classList.add("hidden");
-  resultSection.classList.remove("hidden");
 
-  document.getElementById("progress-bar").style.width = "100%";
+  resultSection.classList.remove("hidden");
 
   document.getElementById("final-score").textContent =
     `Your score: ${score} / ${questions.length}`;
 
-  let message = "";
-
-  if (score === questions.length) {
-    message = "Perfect score! You're an anime master! 🏆";
-  } else if (score >= 7) {
-    message = "Amazing work! You're a true anime fan! 🌟";
-  } else if (score >= 4) {
-    message = "Good effort! Keep watching and learning! 💜";
-  } else {
-    message = "Keep practising! You'll become an anime expert! 🌸";
-  }
-
-  document.getElementById("result-message").textContent = message;
+  document.getElementById("result-message").textContent =
+    score === questions.length
+      ? "Perfect score! You're an anime master! 🏆"
+      : score >= 7
+      ? "Amazing work! You're a true anime fan! 🌟"
+      : score >= 4
+      ? "Good effort! Keep watching and learning! 💜"
+      : "Keep practising! You'll become an anime expert! 🌸";
 
   const review = document.getElementById("answer-review");
+
   review.innerHTML = "";
 
   answerHistory.forEach((item, index) => {
+
     const div = document.createElement("div");
+
     div.className = "review-item";
 
-    const status = item.isCorrect ? "Correct" : "Incorrect";
+    const status = item.isCorrect ? "✅ Correct" : "❌ Incorrect";
 
     div.textContent =
       `${index + 1}. ${item.question} | Your answer: ${item.selected} | Correct answer: ${item.correct} | ${status}`;
 
     review.appendChild(div);
+
   });
 
   saveScore();
+
   resultSection.scrollIntoView({ behavior: "smooth" });
+
 }
+
+
+// ================= SAVE SCORE =================
 
 function saveScore() {
-  const scores = JSON.parse(localStorage.getItem("animeScores") || "[]");
 
-  scores.push({
-    anime: currentAnime,
-    score: score,
-    total: questions.length,
-    date: new Date().toLocaleDateString()
-  });
+  let scores = [];
 
-  scores.sort((a, b) => b.score - a.score);
-  localStorage.setItem("animeScores", JSON.stringify(scores.slice(0, 10)));
+  try {
 
-  showLeaderboard();
-}
+    scores = JSON.parse(localStorage.getItem("animeScores") || "[]");
 
-function showLeaderboard() {
-  const scores = JSON.parse(localStorage.getItem("animeScores") || "[]");
-  const list = document.getElementById("leaderboard-list");
+    if (!Array.isArray(scores)) scores = [];
 
-  list.innerHTML = "";
-
-  if (scores.length === 0) {
-    list.textContent = "No scores yet. Play a quiz to appear here!";
-    return;
   }
 
-  scores.forEach((item, index) => {
-    const div = document.createElement("div");
-    div.className = "leaderboard-item";
+  catch {
 
-    const name = document.createElement("span");
-    name.textContent = `${index + 1}. ${item.anime}`;
+    scores = [];
 
-    const result = document.createElement("strong");
-    result.textContent = `${item.score}/${item.total}`;
+  }
 
-    div.appendChild(name);
-    div.appendChild(result);
-    list.appendChild(div);
+  scores.push({
+
+    anime: currentAnime,
+
+    score: score,
+
+    total: questions.length,
+
+    date: new Date().toLocaleDateString()
+
   });
+
+  scores.sort((a, b) =>
+    (b.score / b.total) - (a.score / a.total)
+  );
+
+  localStorage.setItem(
+    "animeScores",
+    JSON.stringify(scores.slice(0, 10))
+  );
+
+  showLeaderboard();
+
 }
+
+
+// ================= SHOW LEADERBOARD =================
+
+function showLeaderboard() {
+
+  let scores = [];
+
+  try {
+
+    scores = JSON.parse(localStorage.getItem("animeScores") || "[]");
+
+    if (!Array.isArray(scores)) scores = [];
+
+  }
+
+  catch {
+
+    scores = [];
+
+  }
+
+  const lists = [
+    document.getElementById("leaderboard-list"),
+    document.getElementById("leaderboard-list-result")
+  ];
+
+  lists.forEach(list => {
+
+    if (!list) return;
+
+    list.innerHTML = "";
+
+    if (scores.length === 0) {
+
+      list.textContent = "No scores yet. Play a quiz to appear here!";
+
+      return;
+
+    }
+
+    scores.forEach((item, index) => {
+
+      const div = document.createElement("div");
+
+      div.className = "leaderboard-item";
+
+      const name = document.createElement("span");
+
+      name.textContent = `${index + 1}. ${item.anime}`;
+
+      const result = document.createElement("strong");
+
+      result.textContent = `${item.score}/${item.total}`;
+
+      div.appendChild(name);
+
+      div.appendChild(result);
+
+      list.appendChild(div);
+
+    });
+
+  });
+
+}
+
+
+// ================= DAILY QUIZ =================
 
 function startDailyQuiz() {
+
   startQuiz("General Anime", "daily");
+
 }
+
+
+// ================= RANDOM QUIZ =================
 
 function startRandomQuiz() {
+
   startQuiz("General Anime", "random");
+
 }
 
+
+// ================= RESTART QUIZ =================
+
 function restartQuiz() {
+
   startQuiz(
     currentMode === "random" || currentMode === "daily"
       ? "General Anime"
       : currentAnime,
     currentMode
   );
+
 }
+
+
+// ================= BACK TO HOME =================
 
 function scrollToQuizzes() {
+
   clearInterval(timerInterval);
+
   quizSection.classList.add("hidden");
+
   resultSection.classList.add("hidden");
 
-  const categories = document.getElementById("categories");
-  categories.classList.remove("hidden");
-  categories.scrollIntoView({ behavior: "smooth" });
+  document.getElementById("categories").classList.remove("hidden");
+
+  showLeaderboard();
+
+  document.getElementById("categories").scrollIntoView({
+    behavior: "smooth"
+  });
+
 }
 
+
+// ================= INITIALIZE QUIZ =================
+
 createCategories();
+
 showLeaderboard();
