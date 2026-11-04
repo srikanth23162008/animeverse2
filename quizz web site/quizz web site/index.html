@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AnimeVerse | Anime Quiz</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <h1>🌸 AnimeVerse</h1>
+    <nav>
+      <a href="#home">Home</a>
+      <a href="#categories">Quizzes</a>
+      <a href="#leaderboard">Leaderboard</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="home" class="hero">
+      <p class="tagline">WELCOME TO THE ANIME WORLD</p>
+      <h2>How well do you know anime?</h2>
+      <p>Challenge yourself with fun anime quizzes!</p>
+      <button onclick="scrollToQuizzes()">Explore Quizzes</button>
+    </section>
+
+    <section id="categories" class="section">
+      <h2>Choose Your Anime</h2>
+      <p>Select a category and test your knowledge.</p>
+
+      <div id="category-list" class="category-grid"></div>
+
+      <div class="extra-buttons">
+        <button onclick="startDailyQuiz()">Daily Quiz</button>
+        <button onclick="startRandomQuiz()">Random Quiz</button>
+      </div>
+    </section>
+
+    <section id="quiz-section" class="section hidden">
+      <div class="quiz-top">
+        <h2 id="quiz-title">Anime Quiz</h2>
+        <p>Time left: <span id="timer">05:00</span></p>
+      </div>
+
+      <div class="progress-container">
+        <div id="progress-bar"></div>
+      </div>
+
+      <p id="question-number"></p>
+      <h3 id="question-text"></h3>
+
+      <div id="answer-options"></div>
+
+      <p id="feedback"></p>
+      <button id="next-button" onclick="nextQuestion()" disabled>
+        Next Question
+      </button>
+    </section>
+
+    <section id="result-section" class="section hidden">
+      <h2>Quiz Completed! 🎉</h2>
+      <h3 id="final-score"></h3>
+      <p id="result-message"></p>
+
+      <h3>Answer Review</h3>
+      <div id="answer-review"></div>
+
+      <button onclick="restartQuiz()">Try Again</button>
+      <button onclick="scrollToQuizzes()">Choose Another Quiz</button>
+    </section>
+
+    <section id="leaderboard" class="section">
+      <h2>🏆 Leaderboard</h2>
+      <div id="leaderboard-list"></div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Made with 💜 by AnimeVerse</p>
+    <p>Anime fans, this is your world!</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
